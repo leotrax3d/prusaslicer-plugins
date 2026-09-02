@@ -7,86 +7,113 @@ Repository ist der Ort, an dem wir eigene Plugins dafür entwickeln, testen und
 veröffentlichen.
 
 > ⚠️ **Status: experimentell.** PrusaSlicer 3.0 ist Alpha, und die Lua-API ist von Prusa
-> ausdrücklich als *experimentell* markiert — Breaking Changes sind angekündigt und werden
-> laut Prusa auch längerfristig vorkommen. Alles hier kann mit jedem Alpha-Release brechen.
+> ausdrücklich als *experimentell* markiert — Breaking Changes sind angekündigt. Alles hier
+> kann mit jedem Alpha-Release brechen.
+>
+> Die Plugins in diesem Repo sind bislang **nicht am laufenden Slicer getestet**. Siehe
+> [Testing](#testing).
 
 ---
 
-## Was das Plugin-System kann (Stand Alpha 11)
+## Plugins
 
-Was wir aus den öffentlichen Ankündigungen und Release Notes sicher wissen:
+### `com.prsslcr.calibration` — Calibration Extras
 
-- **Sprache: Lua.** Prusa hat Lua gewählt, weil es sich sauber sandboxen lässt.
-- **Sandbox.** Die Module `os` und `io` stehen nicht zur Verfügung; Dateizugriff ist auf das
-  eigene Plugin-Verzeichnis beschränkt. Kein Netzwerk, keine fremden Prozesse.
-- **Ein Plugin-Typ: `project.plugin`.** Er erzeugt neue Objekte im Slicer-Projekt. Die
-  mitgelieferten Kalibrier-Plugins (*Flow Tower*, *Temperature Tower*) legen so ein komplettes
-  Projekt mit Einstellungen und Geometrie an. Weitere Typen sind laut Prusa vorgesehen, aber
-  noch nicht verfügbar.
-- **Bundles mit Manifest.** Mehrere Plugins liegen zusammen in einem Bundle-Verzeichnis mit
-  einer `manifest.json`. Pflichtfelder: `id` (Reverse-DNS), `name`, `license`, `version`,
-  `author`, `min_slicer_version`, `required_apis`. Optional: `description`, `category`,
-  `web`, `repo`.
-- **Deklarative Parameter-Dialoge.** Ein Plugin deklariert in `info.params` seine Eingaben
-  (Typen: `float`, `int`, `bool`); PrusaSlicer baut daraus automatisch den Dialog und übergibt
-  die Werte an `execute(params)`.
-- **Signierte Distribution.** Bundles werden als ZIP mit einem RSA-Schlüsselpaar signiert.
-- **Marketplace in Arbeit.** Geplant sind Ein-Klick-Installation, Bewertungen und Listen
-  vertrauenswürdiger Autoren. Von Prusa eingereichte Plugins werden geprüft.
+Ergänzt Prusas mitgelieferte Kalibrier-Plugins (Flow Tower, Temperature Tower):
 
-### Ein minimales Plugin
+| Plugin | Menü | Was es tut |
+|---|---|---|
+| **Fan Tower** | Calibration/Fan Tower | Turm mit dünner Nebensäule; schaltet die Lüfterdrehzahl pro Höhenband per `M106`. Die Säule kühlt zwischen den Schichten kaum ab und zeigt schlechte Kühlung zuerst. |
+| **Speed Tower** | Calibration/Speed Tower | Turm, dessen Druckgeschwindigkeit pro Höhenband über Modifier-Volumes überschrieben wird. |
+| **Tolerance Test** | Calibration/Tolerance Test | Platte mit einer Lochreihe steigenden Spiels plus passendem Prüfstift — ermittelt das nötige Spiel für Passungen. |
+
+Ein Retraction Tower war geplant und wurde bewusst verworfen; die Begründung steht in
+[`docs/api-notes.md`](docs/api-notes.md#warum-es-keinen-retraction-tower-gibt).
+
+Die weitere Planung — inklusive der blockierten Filament-Datenbank — steht in
+[`docs/roadmap.md`](docs/roadmap.md).
+
+---
+
+## Was das Plugin-System kann
+
+Zusammengefasst; die belastbare Referenz mit allen Signaturen ist
+[`docs/api-notes.md`](docs/api-notes.md).
+
+- **Sprache: Lua**, in einer Sandbox ohne `os`, `io` und Netzwerk. Dateizugriff nur im
+  eigenen Plugin-Verzeichnis.
+- **Ein Plugin-Typ: `project.plugin`.** Er erzeugt Objekte im Slicer-Projekt. Weitere Typen
+  sind laut Prusa vorgesehen, aber noch nicht verfügbar.
+- **Bundles mit Manifest.** Mehrere Plugins liegen zusammen in einem Verzeichnis mit einer
+  `manifest.json`. Pflichtfelder: `id` (Reverse-DNS), `name`, `license`, `version`,
+  `author`, `min_slicer_version`, `required_apis`.
+- **Deklarative Dialoge.** Ein Plugin deklariert in `info.params` seine Eingaben; PrusaSlicer
+  baut daraus den Dialog. Vier Typen: `string`, `float`, `int`, `bool`.
+- **Prozedurale Geometrie.** Elf Primitive (`make_cube`, `make_cylinder`, `make_torus`,
+  `make_snap`, …) sowie `load_stl`, `emboss_svg` und `emboss_text`.
+- **Negative- und Modifier-Volumes.** Boolesche Abzüge und ortsabhängige Einstellungen,
+  dazu `SupportBlocker` und `SupportEnforcer`.
+- **Custom G-Code pro Schicht** via `insert_layer_custom_gcode` — der Hebel für alles, was
+  Firmware-Zustand ist (Temperatur, Lüfter).
+- **Signierte Distribution** als ZIP mit RSA-Schlüsselpaar. Ein Marketplace ist in Arbeit.
+
+### Was nicht geht
+
+- Kein Post-Processing von G-Code (dafür weiterhin externe Skripte).
+- Kein Netzwerk, kein Zugriff auf beliebige Dateien, keine Persistenz über Neustarts hinweg.
+- Keine Events — ein Plugin läuft nur, wenn der Nutzer den Menüeintrag klickt.
+- Keine eigenen Gizmos in der 3D-Ansicht.
+- Im Dialog keine Listen, Enums oder Min/Max-Grenzen.
+
+---
+
+## Ein minimales Plugin
 
 ```lua
 info = {
-    id = "com.prusa3d.slicer.hello_world",
+    id = "hello",
     type = "project.plugin",
     title = "Hello world",
-    menu = "Minimal/Hello world",
-    params = {{name = "num", label = "Your lucky number", type = "int", default = 42}}
+    menu = "Tutorial/Hello world",
+    params = {
+        {name = "text", label = "Text", type = "string", default = "Hello world"}
+    }
 }
 
-function execute(params)
-    print("Hello no " .. params.num .. "!")
+function execute(opts)
+    api.project:add_object{
+        mesh = api.emboss_text{
+            font = api.get_default_font(),
+            text = opts.text,
+            depth = 1
+        },
+        object_params = {fill_density = "0%"}
+    }
 end
 ```
-
-### Was (noch) nicht geht
-
-Wichtig für die Roadmap — folgendes ist mit dem heutigen Stand **nicht** möglich:
-
-- Kein Post-Processing von G-Code über die Plugin-API (dafür weiterhin externe
-  Post-Processing-Skripte).
-- Kein Netzwerkzugriff, also keine Cloud-Anbindung, kein Upload, keine Online-Datenbank.
-- Kein Zugriff auf beliebige Dateien, also kein Import/Export eigener Formate.
-- Keine eigenen Zeichenwerkzeuge oder Gizmos in der 3D-Ansicht.
-- Keine Reaktion auf Ereignisse — ein Plugin läuft nur, wenn der Nutzer den Menüeintrag klickt.
-
-Der Umfang der Geometrie-Funktionen ist der große offene Punkt. Bekannt sind bisher
-`load_stl` und `emboss_svg`; die vollständige Referenz steht unter
-<https://prusa.io/ps-plugins/>. Was wir davon selbst verifiziert haben, sammeln wir in
-[`docs/api-notes.md`](docs/api-notes.md).
-
----
 
 ## Repository-Aufbau
 
 ```
-plugins/<bundle-id>/       ein Plugin-Bundle mit manifest.json und Lua-Skripten
-docs/                      API-Notizen und Entwickler-Doku
+plugins/<bundle-id>/    ein Plugin-Bundle mit manifest.json und Lua-Skripten
+docs/api-notes.md       rekonstruierte API-Referenz und offene Fragen
+docs/roadmap.md         Planung
 ```
 
-Aktuell enthält das Repo noch keine Plugins — wir stehen ganz am Anfang.
+## Installation
+
+Bundle-Ordner aus `plugins/` nach `(datadir)/lua` bzw. `(configdir)/lua` kopieren und
+PrusaSlicer neu starten. Die Menüeinträge werden beim Start aus dem Ordner aufgebaut.
+
+Die konkreten Pfade pro Betriebssystem tragen wir nach, sobald sie verifiziert sind.
 
 ## Entwicklung
 
-Neues Bundle anlegen (interaktiver Assistent, erzeugt Dateien und `manifest.json`):
+Neues Bundle anlegen (interaktiver Assistent):
 
 ```bash
 <installation_path>/PrusaSlicer plugin init com.example.my-plugin
 ```
-
-Zum Testen kommt das Bundle nach `(datadir)/lua` bzw. `(configdir)/lua`; danach
-PrusaSlicer neu starten, damit der Menüeintrag erscheint.
 
 Signieren für die Verteilung:
 
@@ -100,10 +127,18 @@ Signieren für die Verteilung:
 
 > Private Schlüssel gehören **nicht** in dieses Repository.
 
-## Mitmachen
+## Testing
 
-Ideen, Bugreports und Pull Requests sind willkommen. Da die API sich bewegt, bitte immer
-angeben, mit welcher Alpha-Version getestet wurde.
+Syntaxprüfung aller Plugins:
+
+```bash
+luac -p plugins/*/*.lua
+```
+
+Das ist derzeit alles, was sich automatisiert prüfen lässt. Die Lua-Umgebung des Slicers
+(`api`, `VolumeType`, das Preset-System) existiert außerhalb von PrusaSlicer nicht, also
+muss jedes Plugin von Hand im Slicer geprüft werden. Bitte bei Rückmeldungen immer die
+getestete Alpha-Version angeben.
 
 ## Lizenz
 
@@ -111,7 +146,7 @@ Siehe [LICENSE](LICENSE).
 
 ## Quellen
 
-- [PrusaSlicer 3.0.0-alpha11 Release Notes](https://github.com/prusa3d/PrusaSlicer/releases/tag/version_3.0.0-alpha11)
-- [PrusaSlicer 3.0 Preview – Built for the Future of 3D Printing (Prusa Blog)](https://blog.prusa3d.com/prusaslicer-3-0-preview-built-for-the-future-of-3d-printing_137672/)
 - [Plugin_API.md im PrusaSlicer-Repository](https://github.com/prusa3d/PrusaSlicer/blob/version_3.0.0-alpha11/doc/Plugin_API.md)
+- [ProjectApi.cpp — die eigentliche API-Referenz](https://github.com/prusa3d/PrusaSlicer/blob/version_3.0.0-alpha11/src/slic3r-shared/src/Slic3r/App/Lua/ProjectApi.cpp)
+- [PrusaSlicer 3.0.0-alpha11 Release Notes](https://github.com/prusa3d/PrusaSlicer/releases/tag/version_3.0.0-alpha11)
 - [Plugin-API-Referenz](https://prusa.io/ps-plugins/)
