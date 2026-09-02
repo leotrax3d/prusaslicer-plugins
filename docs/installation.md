@@ -39,9 +39,15 @@ carries a ready-made ZIP per bundle, built and layout-checked by CI, so there is
 package yourself.
 
 1. Download `com.leotrax3d.calibration.zip` from the latest release.
-2. Install it in PrusaSlicer, or unpack it into a directory named after the bundle id
-   inside the `lua` directory described above.
+2. Unpack it into a directory named after the bundle id, inside the `lua` directory
+   described below — so `lua/com.leotrax3d.calibration/manifest.json`, and so on.
 3. Restart the slicer.
+
+**Unpack it; do not use the slicer's ZIP import.** The release archives are not signed
+yet, and importing a ZIP requires both a signature and the author's public key already
+present on your machine. See [Installing from a ZIP](#installing-from-a-zip) for the
+detail. Unpacking sidesteps this entirely, because bundles loaded from the `lua`
+directory are not verified.
 
 The sections below cover installing from a clone instead, which is what you want while
 developing.
@@ -117,13 +123,20 @@ Selecting the folder produces the nested layout that fails.
 Bundles are flat: subdirectories are not supported, and file names are restricted to
 `[a-zA-Z0-9.-_ ]+`.
 
-Signing is not required to install. A signed bundle additionally carries `manifest.txt`
-(file checksums) and `manifest.sign`, both produced by `PrusaSlicer plugin sign`, which
-also writes a correctly laid out ZIP for you — the reliable way to package for
-distribution.
+**Installing a ZIP requires a signature, and the author's public key must already be
+trusted.** `PluginRegistry::install()` loads
+`(data directory)/authorized_authors/<author>.pem` — where `<author>` is the `author`
+field from `manifest.json` — and verifies the bundle against it. Without that file the
+install fails with `Cannot load public key for author <name>`; with a bad or missing
+signature it fails with `Integrity verification failed`.
 
-For local development, copying the directory as described above is simpler than
-rebuilding an archive after every edit.
+A signed bundle carries two extra files, both produced by `PrusaSlicer plugin sign`:
+`manifest.txt` (a SHA-256 per file) and `manifest.sign` (an RSA signature over that
+listing). The same command also writes a correctly laid out ZIP.
+
+Copying the bundle directory has no such requirement — `PluginRegistry::scan()` reads
+`(data directory)/lua` without verifying anything. That is why the directory route is the
+one to use for development and for unsigned bundles.
 
 ## Updating
 
@@ -145,6 +158,10 @@ running build actually uses — the alpha's directory is separate from a stable 
 which is the most common cause. Check that `manifest.json` sits directly inside the bundle
 directory rather than in a nested folder, that the directory name matches the manifest
 `id`, and that the slicer was fully restarted.
+
+**`Cannot load public key for author <name>` when installing a ZIP.** The bundle is
+unsigned, or its author's public key is not in `(data directory)/authorized_authors`.
+Unpack the archive into the `lua` directory instead — that path performs no verification.
 
 **`cannot load manifest.json` when installing a ZIP.** The archive wraps the bundle in a
 directory. Compress the files inside the bundle, not the bundle folder — see

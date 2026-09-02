@@ -90,6 +90,20 @@ api.project:clear_layer_custom_steps(bed)
 This is the lever for anything that is **firmware state**: temperature (`M104`), fan
 (`M106`/`M107`). Prusa's Temperature Tower works exactly this way.
 
+## Installation and trust
+
+Two paths, with very different requirements:
+
+- `PluginRegistry::scan()` reads `(data directory)/lua` at startup and verifies **nothing**.
+  Any bundle directory placed there loads.
+- `PluginRegistry::install()`, used for ZIP import, loads
+  `(data directory)/authorized_authors/<author>.pem` (the `author` field from
+  `manifest.json`) and verifies the bundle's `manifest.sign` against it. Both the key and a
+  valid signature are required.
+
+So the sandbox — not signing — is what constrains a plugin dropped into `lua`. Signing
+gates the convenient install path, not execution.
+
 ## Sandbox
 
 No `os`, no `io`, no network. File access is limited to the plugin's own directory.

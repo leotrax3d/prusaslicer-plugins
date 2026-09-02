@@ -95,8 +95,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > notes.md <<'NOTES'
-          Download the bundle below and install it in PrusaSlicer 3.0 — the archive is
-          already laid out the way the slicer expects, so no manual packaging is needed.
+          Download the bundle below and unpack it into your PrusaSlicer data directory,
+          under `lua/<bundle-id>/`, then restart the slicer.
+
+          Do not use the slicer's ZIP import: these archives are unsigned, and that path
+          requires both a signature and the author's public key already present on your
+          machine. Bundles loaded from the `lua` directory are not verified, so unpacking
+          works without either.
 
           Installation paths and troubleshooting are in
           [docs/installation.md](../blob/main/docs/installation.md).
