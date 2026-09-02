@@ -266,19 +266,60 @@ not built.
 Post-processing scripts remain the escape hatch for all of the above: any language, full
 system rights, no sandbox, configured under Print Settings → Post-processing scripts.
 
+## The cooling buffer will fight a calibration plugin
+
+Not obvious, and it silently invalidates results rather than failing.
+
+`CoolingBuffer::change_extruder_set_fan()` recomputes a fan speed for **every** layer from
+the filament config and emits its own `M106` whenever that value changes. A plugin that
+steps the fan with `insert_layer_custom_gcode` is therefore not authoritative: the buffer
+can overwrite it at any layer. Short layers are the common trigger, because the buffer
+forces full throttle whenever a layer prints faster than `slowdown_below_layer_time`.
+
+The same logic **slows layers down** to reach `slowdown_below_layer_time`, which quietly
+defeats any speed test — every band prints at roughly the same speed while its label
+claims otherwise. `filament_max_volumetric_speed` caps fast bands by a second route.
+
+What works, on the material preset:
+
+| Goal | Settings |
+| --- | --- |
+| Own the fan | `cooling = 0`, `fan_always_on = 0`, `full_fan_speed_layer = 0` — computed speed stays 0, so after one `M107` the buffer stays quiet |
+| Print at the speed you asked for | `cooling = 0`, plus `filament_max_volumetric_speed = 0` |
+| Keep cooling constant while testing something else | `fan_always_on = 1` with `min_fan_speed` fixed |
+
+Generalising: **anything the slicer computes per layer can overwrite what a plugin
+injects.** Check for a computed equivalent before assuming custom G-code wins.
+
+## Verified in the slicer
+
+Confirmed on 3.0.0-alpha11, Windows, Prusa MINI 0.4:
+
+- Plugins load, menu entries appear under the path in `info.menu`, and the generated
+  dialog returns its values to `execute`.
+- **`rotate` is applied about the volume's local origin, before `translate`.** Engraved
+  side labels land in the right place with `rotate{x = 90}` and the arithmetic in
+  `labels.lua`.
+- **`emboss_text` places glyphs in the XY plane, extruded along +Z.** Labels engraved into
+  a vertical face read correctly and are not mirrored.
+- `VolumeType.Negative` engraving into a `make_cube` tower works as expected.
+
 ## Unverified assumptions
 
-Everything in this project's plugins that could not be settled from the source. All three
-concern text engraving and are isolated in `labels.lua`, so one fix corrects every plugin.
+- **Primitive origins.** `its_make_cube` builds from (0,0,0), consistent with
+  `note_badge.lua` and with observed results. Where `make_cylinder` places its origin is
+  still unconfirmed — this project sidesteps the question by positioning cylinders from
+  `Mesh:bounds()` instead of assuming, which is worth copying.
+- Where `print()` writes, and what a workable debugging loop looks like.
 
-1. **Rotation pivot.** Is `rotate` applied about the volume's local origin, and before
-   `translate`? Prusa's Temperature Tower uses `rotate{x = 90}` with hand-tuned constants
-   from which the semantics cannot be safely inferred.
-2. **Primitive origins.** `its_make_cube` builds from (0,0,0), consistent with
-   `note_badge.lua`. Whether `make_cylinder` is centred in XY is inferred, not confirmed.
-3. **`emboss_text` orientation.** Assumed glyphs in the XY plane, extruded along +Z.
+## Design notes worth keeping
 
-Also open: where `print()` writes, and what a workable debugging loop looks like.
+- **Position from `Mesh:bounds()`, not from assumed origins.** Costs two lines and removes
+  a whole class of silent misplacement.
+- **A tall slender feature needs a brim.** The slicer's own stability check flags it, and
+  the warning is right.
+- **Keep unverified geometry maths in one module.** All text placement lives in
+  `labels.lua`, so a wrong assumption is one fix, not four.
 
 ## Working on this repository
 

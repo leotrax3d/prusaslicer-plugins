@@ -41,6 +41,21 @@ function execute(opts)
     bed:print_presets():set("top_solid_layers", 0)
     bed:print_presets():set("bottom_solid_layers", 3)
 
+    -- Stop the slicer from quietly undoing the test.
+    --
+    -- A 20 mm tower has very short layers, so CoolingBuffer would slow them
+    -- down to slowdown_below_layer_time and every band would print at roughly
+    -- the same speed. Disabling auto cooling removes that, while
+    -- fan_always_on with a fixed speed keeps cooling constant so it does not
+    -- confound the comparison.
+    bed:material_presets(0):set("cooling", 0)
+    bed:material_presets(0):set("fan_always_on", 1)
+    bed:material_presets(0):set("min_fan_speed", 100)
+
+    -- An uncapped volumetric limit matters just as much: with it in place the
+    -- fast bands would silently print slower than their label claims.
+    bed:material_presets(0):set("filament_max_volumetric_speed", 0)
+
     local other_volumes = {}
     local speed_span = opts.max_speed - opts.min_speed
 
