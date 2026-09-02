@@ -1,20 +1,19 @@
--- Gemeinsame Helfer zum Beschriften von Kalibrier-Objekten.
+-- Shared helpers for labelling calibration objects.
 --
--- Beschriftungen werden als VolumeType.Negative gesetzt, also in die Oberfläche
--- graviert. Zwei Annahmen stecken hier drin, die wir noch nicht am laufenden
--- Slicer verifiziert haben (siehe docs/api-notes.md):
+-- Labels are placed as VolumeType.Negative, so they are engraved into the
+-- surface. Two assumptions are baked in here that have not been verified
+-- against a running slicer (see docs/api-notes.md):
 --
---   1. api.emboss_text erzeugt die Glyphen in der XY-Ebene, extrudiert nach +Z.
---   2. `rotate` wird um den lokalen Ursprung des Volumes angewendet, und zwar
---      vor `translate`.
+--   1. api.emboss_text places glyphs in the XY plane, extruded along +Z.
+--   2. `rotate` is applied about the volume's local origin, before `translate`.
 --
--- Sollte sich das als falsch herausstellen, muss nur diese Datei angepasst
--- werden -- alle Plugins beschriften ausschließlich hierüber.
+-- If either turns out to be wrong, only this file needs correcting -- every
+-- plugin labels exclusively through these helpers.
 
 local M = {}
 
---- Graviert Text in die Oberseite eines Objekts.
--- Braucht keine Rotation und ist daher der robustere der beiden Wege.
+--- Engraves text into the top face of an object.
+-- Needs no rotation, making it the more robust of the two helpers.
 --@param opts table text, center_x, center_y, top_z, size?, depth?, font?
 --@return table VolumeDefinition
 function M.top_label(opts)
@@ -33,16 +32,16 @@ function M.top_label(opts)
         translate = {
             x = opts.center_x - (b.max_x - b.min_x) * 0.5 - b.min_x,
             y = opts.center_y - (b.max_y - b.min_y) * 0.5 - b.min_y,
-            -- Der Körper liegt in [z, z + depth]; er soll die Oberseite treffen.
+            -- The body spans [z, z + depth]; it must meet the top face.
             z = opts.top_z - depth
         }
     }
 end
 
---- Graviert Text in die Vorderseite (kleinstes Y) eines Objekts.
--- Nach rotate{x = 90} zeigt die lokale Y-Achse nach +Z und die Extrusion nach -Y.
--- Der Körper liegt danach in y = [translate.y - depth, translate.y], soll aber
--- ab der Fläche nach innen schneiden -- daher translate.y = face_y + depth.
+--- Engraves text into the front face (minimum Y) of an object.
+-- After rotate{x = 90} the local Y axis points along +Z and the extrusion along
+-- -Y. The body then spans y = [translate.y - depth, translate.y], but has to cut
+-- inwards from the face, hence translate.y = face_y + depth.
 --@param opts table text, center_x, center_z, face_y, size?, depth?, font?
 --@return table VolumeDefinition
 function M.front_label(opts)
@@ -67,7 +66,7 @@ function M.front_label(opts)
     }
 end
 
---- Formatiert eine Zahl kurz und ohne überflüssige Nullen.
+--- Formats a number compactly, without trailing zeros.
 function M.fmt(value, decimals)
     local s = string.format("%." .. (decimals or 2) .. "f", value)
     s = s:gsub("0+$", ""):gsub("%.$", "")

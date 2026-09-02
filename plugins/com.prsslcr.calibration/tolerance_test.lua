@@ -1,11 +1,11 @@
--- Tolerance Test -- ermittelt das nötige Spiel für Passungen.
+-- Tolerance Test -- determines the fit allowance your parts need.
 --
--- Erzeugt einen Block mit einer Lochreihe. Jedes Loch ist um ein anderes Spiel
--- größer als der mitgedruckte Prüfstift. Nach dem Druck probiert man durch, ab
--- welchem Loch der Stift sauber passt -- dieser Wert ist das Spiel, das eigene
--- Konstruktionen für diesen Drucker und dieses Filament brauchen.
+-- Produces a plate with a row of holes, each one a different amount larger than
+-- the test pin printed alongside it. After printing, work along the row to find
+-- the first hole the pin seats cleanly in; that clearance is what your own
+-- designs need for this printer and this filament.
 --
--- Reine Geometrie, keine G-Code-Tricks und keine Einstellungswechsel.
+-- Pure geometry: no G-code tricks and no setting changes mid-print.
 
 local labels = require('labels')
 
@@ -24,9 +24,9 @@ info = {
     }
 }
 
-local MARGIN = 4.0      -- Materialrand um die Löcher [mm]
-local LABEL_ROW = 6.0   -- Höhe des Beschriftungsstreifens vor den Löchern [mm]
-local PIN_GAP = 10.0    -- Abstand des Prüfstifts zur Platte [mm]
+local MARGIN = 4.0      -- material margin around the holes [mm]
+local LABEL_ROW = 6.0   -- depth of the label strip in front of the holes [mm]
+local PIN_GAP = 10.0    -- gap between the test pin and the plate [mm]
 
 function execute(opts)
     local steps = math.max(2, opts.steps)
@@ -40,8 +40,8 @@ function execute(opts)
 
     local bed = api.project:current_bed()
 
-    -- Massiv drucken: bei einer Passungsprüfung darf die Lochwand nicht
-    -- nachgeben, sonst misst man die Infill-Dichte statt der Toleranz.
+    -- Print solid: for a fit test the hole wall must not flex, otherwise you
+    -- measure infill density rather than tolerance.
     bed:print_presets():set("fill_density", "100%")
     bed:print_presets():set("perimeters", 3)
 
@@ -52,7 +52,7 @@ function execute(opts)
         local clearance = opts.min_clearance + clearance_span * (i - 1) / (steps - 1)
         local hole_cx = pitch * (i - 0.5)
 
-        -- Etwas über- und unterstehen lassen, damit der Schnitt sauber durchgeht.
+        -- Overhang both ends slightly so the cut passes cleanly through.
         table.insert(other_volumes, {
             mesh = api.make_cylinder((pin_d + clearance) * 0.5, thickness + 2),
             type = VolumeType.Negative,
@@ -78,7 +78,7 @@ function execute(opts)
         }
     }
 
-    -- Der Prüfstift als eigenes Objekt, damit er lose neben der Platte liegt.
+    -- The test pin as its own object, so it prints loose beside the plate.
     api.project:add_object {
         mesh = api.make_cylinder(pin_d * 0.5, thickness * 2),
         translate = { x = plate_w * 0.5, y = -(plate_d * 0.5 + PIN_GAP) },

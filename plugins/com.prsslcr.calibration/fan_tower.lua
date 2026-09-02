@@ -1,9 +1,9 @@
--- Fan Tower -- findet die beste Bauteilkühlung.
+-- Fan Tower -- finds the right amount of part cooling.
 --
--- Die Lüfterdrehzahl ist Firmware-Zustand, lässt sich also sauber pro Höhenband
--- per M106 umschalten. Neben dem Hauptturm steht eine dünne Säule: der Druckkopf
--- muss pro Schicht zwischen beiden hin- und herfahren, wodurch die Säule kaum
--- Zeit zum Abkühlen bekommt. Dort zeigt sich schlechte Kühlung zuerst.
+-- Fan speed is firmware state, so it can be stepped cleanly per height band with
+-- M106. A thin pillar stands beside the main tower: the head has to travel
+-- between the two every layer, leaving the pillar almost no time to cool. That is
+-- where insufficient cooling shows up first.
 
 local labels = require('labels')
 
@@ -22,10 +22,10 @@ info = {
     }
 }
 
-local PILLAR_SIZE = 4.0  -- Kantenlänge der Kühl-Testsäule [mm]
-local PILLAR_GAP  = 15.0 -- Abstand zwischen Turm und Säule [mm]
+local PILLAR_SIZE = 4.0  -- edge length of the cooling test pillar [mm]
+local PILLAR_GAP  = 15.0 -- gap between tower and pillar [mm]
 
---- Fan-Prozent in einen G-Code-Befehl übersetzen.
+--- Translates a fan percentage into a G-code command.
 local function fan_gcode(percent)
     local pwm = math.floor(percent * 255 / 100 + 0.5)
     if pwm <= 0 then
@@ -48,8 +48,8 @@ function execute(opts)
 
     api.project:clear_layer_custom_steps(bed)
 
-    -- Dünne Wände und wenig Infill, damit die Kühlung sichtbar wird und nicht
-    -- die Wandstärke das Ergebnis dominiert.
+    -- Thin walls and light infill, so cooling drives the result rather than
+    -- wall thickness masking it.
     bed:print_presets():set("fill_density", "10%")
     bed:print_presets():set("perimeters", 2)
     bed:print_presets():set("top_solid_layers", 3)
@@ -57,7 +57,7 @@ function execute(opts)
 
     local other_volumes = {}
 
-    -- Die Kühl-Testsäule als zweites Volume desselben Objekts.
+    -- The cooling test pillar, as a second volume of the same object.
     table.insert(other_volumes, {
         mesh = api.make_cube(PILLAR_SIZE, PILLAR_SIZE, total_height),
         translate = {
@@ -73,8 +73,8 @@ function execute(opts)
         local fan = opts.min_fan + fan_span * (i - 1) / (steps - 1)
         local rounded_fan = math.floor(fan + 0.5)
 
-        -- Erst eine Schicht oberhalb des Bandanfangs schalten, damit der Wechsel
-        -- nicht schon in die letzte Schicht des vorherigen Bands fällt.
+        -- Switch one layer above the band start, so the change does not land in
+        -- the last layer of the preceding band.
         api.project:insert_layer_custom_gcode(bed, band_z + layer_height, fan_gcode(rounded_fan))
 
         if opts.enable_labels then

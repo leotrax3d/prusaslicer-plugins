@@ -1,9 +1,9 @@
--- Speed Tower -- findet die höchste Druckgeschwindigkeit ohne Qualitätsverlust.
+-- Speed Tower -- finds the highest print speed that still holds quality.
 --
--- Anders als beim Fan Tower ist Geschwindigkeit kein Firmware-Zustand, sondern
--- eine Slicer-Einstellung. Sie wird deshalb nicht per G-Code geschaltet, sondern
--- über Modifier-Volumes gesetzt, die pro Höhenband die Speed-Parameter
--- überschreiben -- dasselbe Verfahren, das Prusas Flow Tower verwendet.
+-- Unlike fan speed, print speed is not firmware state but a slicer setting. It is
+-- therefore not switched via G-code but applied through modifier volumes that
+-- override the speed parameters per height band -- the same approach Prusa's own
+-- Flow Tower uses.
 
 local labels = require('labels')
 
@@ -30,8 +30,8 @@ function execute(opts)
 
     local bed = api.project:current_bed()
 
-    -- Wenige Wände und offener Innenraum: so entscheidet die Geschwindigkeit
-    -- über das Ergebnis und nicht die Anzahl der Perimeter.
+    -- Few perimeters and an open interior, so speed determines the result rather
+    -- than the perimeter count.
     bed:print_presets():set("fill_density", "0%")
     bed:print_presets():set("perimeters", 2)
     bed:print_presets():set("top_solid_layers", 0)
@@ -44,7 +44,7 @@ function execute(opts)
         local band_z = step_height * (i - 1)
         local speed = opts.min_speed + speed_span * (i - 1) / (steps - 1)
 
-        -- Der Modifier deckt genau ein Höhenband ab und setzt dort die Speeds.
+        -- The modifier covers exactly one height band and sets the speeds there.
         table.insert(other_volumes, {
             mesh = api.make_cube(size, size, step_height),
             type = VolumeType.Modifier,

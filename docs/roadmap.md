@@ -1,84 +1,90 @@
 # Roadmap
 
-Alles hier steht unter dem Vorbehalt einer experimentellen API. Was heute unmöglich ist,
-kann mit dem nächsten Alpha-Release möglich werden — und umgekehrt.
+Everything here is provisional. The Lua API is experimental, so what is impossible today
+may become possible with the next alpha — and what works today may break.
 
-## Die Randbedingung
+## The governing constraint
 
-Es gibt genau einen Plugin-Typ, `project.plugin`, und der folgt immer demselben Ablauf:
+There is exactly one plugin type, `project.plugin`, and it always follows the same flow:
 
-> Nutzer klickt Menüeintrag → Dialog aus `string`/`float`/`int`/`bool` → Plugin erzeugt
-> Objekte und Einstellungen im Projekt.
+> user clicks a menu entry → dialog of `string`/`float`/`int`/`bool` values → plugin
+> creates objects and settings in the project
 
-Kein Netzwerk, kein freier Dateizugriff, keine Events, kein G-Code-Post-Processing. Jede
-Idee muss durch dieses Nadelöhr passen.
+No network, no general filesystem access, no events, no G-code post-processing. Every idea
+has to fit through that opening.
 
-## Phase 0 — API kartieren ✅
+## Phase 0 — Map the API — done
 
-Erledigt, allerdings anders als geplant: statt Blackbox-Tests am laufenden Slicer haben wir
-die API direkt aus `ProjectApi.cpp` und `PluginDialog.cpp` rekonstruiert. Ergebnis in
-[`api-notes.md`](api-notes.md). Wichtigste Erkenntnis: die API kann deutlich mehr als die
-Prosa-Doku andeutet — elf prozedurale Primitive, Negative- und Modifier-Volumes und
-Custom-G-Code pro Schicht.
+Completed, though not as planned. Rather than probing a running slicer, the API was
+reconstructed from `ProjectApi.cpp` and `PluginDialog.cpp` in the PrusaSlicer source. The
+registration code carries full LuaLS annotations and is more complete than the prose
+documentation.
 
-Offen bleibt eine Handvoll Punkte, die sich nur am laufenden Slicer klären lassen
-(Rotations-Pivot, Ursprung der Primitive, gültige Settings-Keys).
+The headline finding: the API is considerably more capable than `Plugin_API.md` suggests —
+eleven procedural primitives, negative and modifier volumes, and per-layer custom G-code.
+Results are in [`api-notes.md`](api-notes.md).
 
-## Phase 1 — Kalibrierung vervollständigen 🟡
+A handful of questions cannot be settled from source alone (rotation pivot, primitive
+origins, which setting keys are valid per volume). Those need a running slicer.
 
-Prusa liefert Flow Tower und Temperature Tower mit. Wir ergänzen das Bundle
-`com.prsslcr.calibration`:
+## Phase 1 — Complete the calibration set — in progress
 
-| Plugin | Verfahren | Status |
-|---|---|---|
-| Fan Tower | `M106` pro Höhenband via Custom-G-Code | ungetestet gebaut |
-| Speed Tower | Modifier-Volumes mit Speed-Overrides | ungetestet gebaut |
-| Tolerance Test | reine Geometrie, Negative-Zylinder | ungetestet gebaut |
-| Retraction Tower | — | **verworfen**, Begründung in [`api-notes.md`](api-notes.md) |
+PrusaSlicer ships a Flow Tower and a Temperature Tower. The `com.prsslcr.calibration`
+bundle adds:
 
-Als Nächstes: am echten Slicer testen, dann Bridging- und Overhang-Test ergänzen.
+| Plugin | Mechanism | Status |
+| --- | --- | --- |
+| Fan Tower | `M106` per height band via custom G-code | built, untested |
+| Speed Tower | modifier volumes with speed overrides | built, untested |
+| Tolerance Test | pure geometry, negative cylinders | built, untested |
+| Retraction Tower | — | dropped, see [`api-notes.md`](api-notes.md#why-there-is-no-retraction-tower) |
 
-## Phase 2 — Passform und Toleranzen
+Next: verify the three against a running slicer and close out the open geometry questions,
+then add bridging and overhang tests.
 
-Aufbauend auf dem Tolerance Test: Gewinde-Testschrauben, Print-in-Place-Scharnier-Test,
-Presspassungen. Braucht vor allem verifizierte Geometrie-Semantik aus Phase 1.
+## Phase 2 — Fit and tolerances
 
-## Phase 3 — Parametrische Nutzobjekte
+Building on the Tolerance Test: thread gauges, print-in-place hinge tests, press-fit
+samples. Depends on the geometry semantics that Phase 1 testing will confirm.
 
-Boxen und Einsätze, Kabelclips, Wandhalter, Spulenhalter. Mit elf Primitiven plus
-Negative-Volumes ist echte parametrische Konstruktion möglich.
+## Phase 3 — Parametric utility objects
 
-> Zu Gridfinity: das Original steht unter CC BY-NC-SA. Die NC-Klausel klären, bevor dort
-> Arbeit hineinfließt.
+Boxes and inserts, cable clips, wall mounts, spool holders. Eleven primitives plus
+negative volumes make genuine parametric modelling viable.
 
-## Phase 4 — Druckhilfen
+On Gridfinity specifically: the original is licensed CC BY-NC-SA. The non-commercial
+clause needs clarifying before investing effort there.
 
-Purge- und Prime-Blöcke, Draft Shields, Opfertürme, vorkonfigurierte Support-Blocker.
-`VolumeType.SupportBlocker` und `SupportEnforcer` existieren, das trägt.
+## Phase 4 — Print aids
 
-## Phase 5 — Filament-Datenbank ⛔ blockiert
+Purge and prime blocks, draft shields, sacrificial towers, preconfigured support blockers.
+`VolumeType.SupportBlocker` and `SupportEnforcer` exist, which is the piece this depends
+on.
 
-Gewünscht, aber mit dem aktuellen API-Stand nicht baubar. Vier unabhängige Blocker, von
-denen jeder einzelne reicht:
+## Phase 5 — Filament database — blocked
 
-1. **Keine Persistenz.** `os` und `io` fehlen; Dateizugriff nur im eigenen
-   Plugin-Verzeichnis. Und da Bundles signiert verteilt werden, würde Schreiben dort die
-   Signatur brechen. Es gibt keinen vorgesehenen Ort für Plugin-Zustand über Neustarts
-   hinweg.
-2. **Keine Events.** Ein Plugin läuft nur auf Klick. Kein Hook nach dem Slicen, also kein
-   automatisches Abziehen des verbrauchten Materials — das Herzstück fehlt.
-3. **Kein Netzwerk.** Keine Online-Datenbank, kein Sync, keine Spoolman-Anbindung.
-4. **Falsche Kategorie.** `project.plugin` erzeugt Objekte im Projekt. Ein Datenmanager
-   ist konzeptionell etwas anderes; hier fehlt kein Feature, hier fehlt ein Plugin-Typ.
+Requested, but not buildable against the current API. Four independent blockers, any one
+of which is sufficient on its own:
 
-Ein fünfter Blocker ist inzwischen weggefallen: die UI kann `string`-Parameter, entgegen
-der Prosa-Doku. Für eine Datenbank reicht das trotzdem nicht — es gibt weiterhin keine
-Listen und keine Tabellen.
+1. **No persistence.** `os` and `io` are absent and file access is confined to the
+   plugin's own directory. Since bundles are distributed signed, writing there would
+   invalidate the signature. There is no sanctioned place for plugin state to survive a
+   restart.
+2. **No events.** A plugin runs only when clicked. There is no post-slice hook, so
+   material used cannot be deducted automatically — which is the core of the feature.
+3. **No network.** No online database, no sync, no Spoolman integration.
+4. **Wrong category.** `project.plugin` creates objects in a project. A data manager is a
+   different kind of thing; this is not a missing feature so much as a missing plugin
+   type.
 
-**Woran wir erkennen, dass es losgehen kann:** ein persistenter Key-Value-Store für
-Plugins, ein Hook nach dem Slicen, und Listen-/Enum-Parameter im Dialog. Erst wenn
-mindestens die ersten beiden da sind, lohnt ein neuer Anlauf.
+A fifth blocker has already fallen away: the dialog does support `string` parameters,
+contrary to the prose documentation. That is still not enough, as there are no list or
+table controls.
 
-Realistisch nicht in dieser Alpha. Wer heute eine Spulenverwaltung braucht, ist mit
-**Spoolman** besser bedient — das wäre auch nach einer API-Erweiterung eher der Partner
-für ein Plugin als etwas, das wir nachbauen.
+**What would unblock it:** a persistent key-value store for plugins, a post-slice hook,
+and list or enum parameters in the dialog. The first two are the hard requirements; it is
+worth revisiting once they exist.
+
+Realistically not in this alpha. Anyone who needs spool management today is better served
+by [Spoolman](https://github.com/Donkie/Spoolman), which would also be the more sensible
+integration target than a from-scratch reimplementation once the API allows it.
