@@ -1,7 +1,7 @@
-# prusaslicer-plugins
+# prusaslicer-plugins-unofficial
 
-[![Latest release](https://img.shields.io/github/v/release/leotrax3d/prusaslicer-plugins?label=release)](https://github.com/leotrax3d/prusaslicer-plugins/releases/latest)
-[![Release workflow](https://img.shields.io/github/actions/workflow/status/leotrax3d/prusaslicer-plugins/release.yml?label=build)](https://github.com/leotrax3d/prusaslicer-plugins/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/leotrax3d/prusaslicer-plugins-unofficial?label=release)](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/releases/latest)
+[![Release workflow](https://img.shields.io/github/actions/workflow/status/leotrax3d/prusaslicer-plugins-unofficial/release.yml?label=build)](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/actions/workflows/release.yml)
 [![PrusaSlicer 3.0.0-alpha11](https://img.shields.io/badge/PrusaSlicer-3.0.0--alpha11-orange)](https://github.com/prusa3d/PrusaSlicer/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -30,7 +30,7 @@ project.
 ## Installation
 
 Download the bundle from the
-[latest release](https://github.com/leotrax3d/prusaslicer-plugins/releases/latest) and
+[latest release](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/releases/latest) and
 unpack it into your PrusaSlicer data directory under `lua/com.leotrax3d.calibration/`,
 then restart the slicer.
 
