@@ -59,8 +59,8 @@ a generated parameter dialog; confirming it builds the objects in the current pr
 ## Installing straight from a clone
 
 ```bash
-git clone https://github.com/leotrax3d/PrsslcrPlugins.git
-cd PrsslcrPlugins
+git clone https://github.com/leotrax3d/prusaslicer-plugins.git
+cd prusaslicer-plugins
 cp -r plugins/com.leotrax3d.calibration "<data directory>/lua/"
 ```
 
