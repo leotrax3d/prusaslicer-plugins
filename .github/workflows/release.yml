@@ -9,6 +9,14 @@ on:
   push:
     tags:
       - "v*"
+  # Also runnable by hand, which is how a release is cut when pushing a tag
+  # is inconvenient. gh creates the tag at the checked-out commit.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. v0.1.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -19,6 +27,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve version
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="$GITHUB_REF_NAME"
+          fi
+          case "$version" in
+            v[0-9]*) ;;
+            *) echo "::error::Version must look like v1.2.3, got '$version'"; exit 1 ;;
+          esac
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "Releasing $version"
 
       - name: Install Lua
         run: |
@@ -57,7 +79,7 @@ jobs:
 
       - name: Compare manifest versions against the tag
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${VERSION#v}"
           for bundle in plugins/*/; do
             id=$(basename "$bundle")
             manifest_version=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$bundle/manifest.json")
@@ -82,6 +104,6 @@ jobs:
           These plugins are drafts: they pass syntax checks but are not yet verified
           against a running slicer. Please report anything that breaks.
           NOTES
-          gh release create "$GITHUB_REF_NAME" dist/*.zip \
-            --title "$GITHUB_REF_NAME" \
+          gh release create "$VERSION" dist/*.zip \
+            --title "$VERSION" \
             --notes-file notes.md
