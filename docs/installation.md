@@ -168,9 +168,9 @@ Unpack the archive into the `lua` directory instead — that path performs no ve
 directory. Compress the files inside the bundle, not the bundle folder — see
 [Installing from a ZIP](#installing-from-a-zip).
 
-**A plugin errors when run.** The plugins in this repository have not been verified
-against a live slicer. Please open an issue with the error text and your alpha version;
-see [`DEVINFO.md`](../DEVINFO.md#unverified-assumptions) for the assumptions most likely to be wrong.
+**A plugin errors when run.** Please open an issue with the error text and your alpha
+version; see [`DEVINFO.md`](../DEVINFO.md#unverified-assumptions) for the assumptions most
+likely to be wrong.
 
 ## A note on trust
 

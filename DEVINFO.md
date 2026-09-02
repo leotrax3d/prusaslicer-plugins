@@ -86,6 +86,10 @@ The failure is silent: the bundle looks as though it were not installed. Prusa's
 `tools/check-plugins.sh` reproduces the scan pass and fails the build on a regression.
 Run it before pushing.
 
+This was not theoretical: all three plugins in this repository originally required their
+shared module at file level, and the whole bundle silently produced no menu entries.
+Moving the require inside `execute()` fixed it, confirmed in 3.0.0-alpha11 on Windows.
+
 ## API surface — verified from `ProjectApi.cpp`
 
 ### Geometry

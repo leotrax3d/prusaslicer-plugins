@@ -9,8 +9,10 @@ introduced.
 PrusaSlicer 3.0 is in early alpha and Prusa has marked the Lua API as experimental, with
 breaking changes expected. Everything here targets `3.0.0-alpha11`.
 
-The plugins in this repository pass syntax checks but **have not been run against a live
-slicer**. Treat them as drafts, and see [Testing](#testing) for what that means in practice.
+The bundle has been confirmed to load and run in 3.0.0-alpha11 on Windows. The geometry
+each plugin produces has had only light use so far — see
+[Testing](#testing) and the open assumptions in
+[`DEVINFO.md`](DEVINFO.md#unverified-assumptions).
 
 ## Plugins
 

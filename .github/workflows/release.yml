@@ -111,8 +111,7 @@ jobs:
           Installation paths and troubleshooting are in
           [docs/installation.md](../blob/main/docs/installation.md).
 
-          These plugins are drafts: they pass syntax checks but are not yet verified
-          against a running slicer. Please report anything that breaks.
+          These plugins are new and lightly tested. Please report anything that breaks.
           NOTES
           gh release create "$VERSION" dist/*.zip \
             --title "$VERSION" \
