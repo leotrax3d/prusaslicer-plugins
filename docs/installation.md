@@ -1,8 +1,8 @@
 # Installation
 
 PrusaSlicer 3.0 will eventually ship a plugin marketplace with one-click installs,
-ratings and signature verification. Until then, plugins are installed by hand — either by
-copying a bundle directory into the slicer's data directory, or from a ZIP archive. This
+ratings and signature verification. Until then, plugins are installed by hand: from a
+release archive, or by copying a bundle directory into the slicer's data directory. This
 document covers both.
 
 ## Requirements
@@ -32,7 +32,21 @@ If you are unsure which directory is live, open the folder containing `PrusaSlic
 and your saved presets — that is the data directory. Create `lua` yourself if it does not
 exist.
 
-## Installing a bundle
+## Installing from a release
+
+The simplest route. Each [release](https://github.com/leotrax3d/prusaslicer-plugins/releases)
+carries a ready-made ZIP per bundle, built and layout-checked by CI, so there is nothing to
+package yourself.
+
+1. Download `com.leotrax3d.calibration.zip` from the latest release.
+2. Install it in PrusaSlicer, or unpack it into a directory named after the bundle id
+   inside the `lua` directory described above.
+3. Restart the slicer.
+
+The sections below cover installing from a clone instead, which is what you want while
+developing.
+
+## Installing a bundle manually
 
 1. Close PrusaSlicer. Plugins are discovered once at startup.
 2. Copy the whole bundle directory — for example `plugins/com.leotrax3d.calibration` — into

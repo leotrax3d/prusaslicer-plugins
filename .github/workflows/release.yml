@@ -1,0 +1,87 @@
+name: Release
+
+# Publishes a GitHub Release whenever a version tag is pushed, with one ZIP per
+# plugin bundle attached. The archives are built here rather than by hand,
+# because PrusaSlicer requires the bundle's files at the archive root -- zipping
+# the bundle directory instead produces "cannot load manifest.json" on install.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4
+
+      - name: Check plugin syntax
+        run: luac5.4 -p plugins/*/*.lua
+
+      - name: Build bundle archives
+        run: |
+          mkdir -p dist
+          for bundle in plugins/*/; do
+            id=$(basename "$bundle")
+            # Zip from inside the bundle so entries are stored flat, with no
+            # directory prefix. -X drops platform-specific extra fields.
+            (cd "$bundle" && zip -X -r "$GITHUB_WORKSPACE/dist/$id.zip" manifest.json *.lua)
+          done
+
+      - name: Verify archive layout
+        run: |
+          for archive in dist/*.zip; do
+            entries=$(unzip -Z1 "$archive")
+            if ! printf '%s\n' "$entries" | grep -qx 'manifest.json'; then
+              echo "::error::$archive has no manifest.json at its root"
+              exit 1
+            fi
+            if printf '%s\n' "$entries" | grep -q '/'; then
+              echo "::error::$archive contains directory entries; bundles must be flat"
+              printf '%s\n' "$entries"
+              exit 1
+            fi
+            echo "$archive:"
+            printf '  %s\n' $entries
+          done
+
+      - name: Compare manifest versions against the tag
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          for bundle in plugins/*/; do
+            id=$(basename "$bundle")
+            manifest_version=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$bundle/manifest.json")
+            if [ "$manifest_version" != "$tag_version" ]; then
+              # A warning, not an error: once the repository holds several
+              # bundles they will not all share one version.
+              echo "::warning::$id declares version $manifest_version but the tag is $tag_version"
+            fi
+          done
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'NOTES'
+          Download the bundle below and install it in PrusaSlicer 3.0 — the archive is
+          already laid out the way the slicer expects, so no manual packaging is needed.
+
+          Installation paths and troubleshooting are in
+          [docs/installation.md](../blob/main/docs/installation.md).
+
+          These plugins are drafts: they pass syntax checks but are not yet verified
+          against a running slicer. Please report anything that breaks.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" dist/*.zip \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file notes.md
