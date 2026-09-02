@@ -22,7 +22,7 @@ documentation.
 
 The headline finding: the API is considerably more capable than `Plugin_API.md` suggests —
 eleven procedural primitives, negative and modifier volumes, and per-layer custom G-code.
-Results are in [`api-notes.md`](api-notes.md).
+Results are in [`DEVINFO.md`](../DEVINFO.md).
 
 A handful of questions cannot be settled from source alone (rotation pivot, primitive
 origins, which setting keys are valid per volume). Those need a running slicer.
@@ -37,7 +37,7 @@ bundle adds:
 | Fan Tower | `M106` per height band via custom G-code | built, untested |
 | Speed Tower | modifier volumes with speed overrides | built, untested |
 | Tolerance Test | pure geometry, negative cylinders | built, untested |
-| Retraction Tower | — | dropped, see [`api-notes.md`](api-notes.md#why-there-is-no-retraction-tower) |
+| Retraction Tower | — | dropped, see [`DEVINFO.md`](../DEVINFO.md#ideas-ruled-out-and-why) |
 
 Next: verify the three against a running slicer and close out the open geometry questions,
 then add bridging and overhang tests.

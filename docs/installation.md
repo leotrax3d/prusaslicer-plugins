@@ -17,20 +17,21 @@ Bundles go into a `lua` subdirectory of the PrusaSlicer data directory:
 
 | Platform | Path |
 | --- | --- |
-| Windows | `%APPDATA%\PrusaSlicer-alpha\lua` |
-| macOS | `~/Library/Application Support/PrusaSlicer-alpha/lua` |
-| Linux | `~/.config/PrusaSlicer-alpha/lua` |
-| Linux (Flatpak) | `~/.var/app/com.prusa3d.PrusaSlicer/config/PrusaSlicer-alpha/lua` |
+| Windows | `%APPDATA%\<app dir>\lua` |
+| macOS | `~/Library/Application Support/<app dir>/lua` |
+| Linux | `~/.config/<app dir>/lua` |
 
-**On the directory name.** It follows the application key of the build you are running.
-Prusa's official alpha builds use `PrusaSlicer-alpha`; beta builds use `PrusaSlicer-beta`,
-and stable releases plain `PrusaSlicer`. A copy built from source uses `PrusaSlicer`
-unless the build script overrides it. If you launch the slicer with `--datadir`, that path
-replaces the table above.
+**`<app dir>` depends on your build.** It follows the application key the build was
+compiled with, and the 3.0 alphas do not use the plain name. A 3.0.0-alpha11 Windows
+install has been observed using `PrusaSlicer3-dev`, giving
+`%APPDATA%\PrusaSlicer3-dev\lua`. Stable releases use `PrusaSlicer`. Launching with
+`--datadir` overrides all of this.
 
-If you are unsure which directory is live, open the folder containing `PrusaSlicer.ini`
-and your saved presets — that is the data directory. Create `lua` yourself if it does not
-exist.
+Rather than guessing, find the folder containing `PrusaSlicer.ini` and your saved presets
+— that is the data directory. Create `lua` inside it if it does not exist.
+
+Bundles shipped with the slicer live in `resources/lua` alongside the application; both
+that directory and the one above are scanned at startup.
 
 ## Installing from a release
 
@@ -39,9 +40,15 @@ carries a ready-made ZIP per bundle, built and layout-checked by CI, so there is
 package yourself.
 
 1. Download `com.leotrax3d.calibration.zip` from the latest release.
-2. Install it in PrusaSlicer, or unpack it into a directory named after the bundle id
-   inside the `lua` directory described above.
+2. Unpack it into a directory named after the bundle id, inside the `lua` directory
+   described below — so `lua/com.leotrax3d.calibration/manifest.json`, and so on.
 3. Restart the slicer.
+
+**Unpack it; do not use the slicer's ZIP import.** The release archives are not signed
+yet, and importing a ZIP requires both a signature and the author's public key already
+present on your machine. See [Installing from a ZIP](#installing-from-a-zip) for the
+detail. Unpacking sidesteps this entirely, because bundles loaded from the `lua`
+directory are not verified.
 
 The sections below cover installing from a clone instead, which is what you want while
 developing.
@@ -117,13 +124,20 @@ Selecting the folder produces the nested layout that fails.
 Bundles are flat: subdirectories are not supported, and file names are restricted to
 `[a-zA-Z0-9.-_ ]+`.
 
-Signing is not required to install. A signed bundle additionally carries `manifest.txt`
-(file checksums) and `manifest.sign`, both produced by `PrusaSlicer plugin sign`, which
-also writes a correctly laid out ZIP for you — the reliable way to package for
-distribution.
+**Installing a ZIP requires a signature, and the author's public key must already be
+trusted.** `PluginRegistry::install()` loads
+`(data directory)/authorized_authors/<author>.pem` — where `<author>` is the `author`
+field from `manifest.json` — and verifies the bundle against it. Without that file the
+install fails with `Cannot load public key for author <name>`; with a bad or missing
+signature it fails with `Integrity verification failed`.
 
-For local development, copying the directory as described above is simpler than
-rebuilding an archive after every edit.
+A signed bundle carries two extra files, both produced by `PrusaSlicer plugin sign`:
+`manifest.txt` (a SHA-256 per file) and `manifest.sign` (an RSA signature over that
+listing). The same command also writes a correctly laid out ZIP.
+
+Copying the bundle directory has no such requirement — `PluginRegistry::scan()` reads
+`(data directory)/lua` without verifying anything. That is why the directory route is the
+one to use for development and for unsigned bundles.
 
 ## Updating
 
@@ -146,13 +160,17 @@ which is the most common cause. Check that `manifest.json` sits directly inside 
 directory rather than in a nested folder, that the directory name matches the manifest
 `id`, and that the slicer was fully restarted.
 
+**`Cannot load public key for author <name>` when installing a ZIP.** The bundle is
+unsigned, or its author's public key is not in `(data directory)/authorized_authors`.
+Unpack the archive into the `lua` directory instead — that path performs no verification.
+
 **`cannot load manifest.json` when installing a ZIP.** The archive wraps the bundle in a
 directory. Compress the files inside the bundle, not the bundle folder — see
 [Installing from a ZIP](#installing-from-a-zip).
 
 **A plugin errors when run.** The plugins in this repository have not been verified
 against a live slicer. Please open an issue with the error text and your alpha version;
-see [`api-notes.md`](api-notes.md) for the assumptions most likely to be wrong.
+see [`DEVINFO.md`](../DEVINFO.md#unverified-assumptions) for the assumptions most likely to be wrong.
 
 ## A note on trust
 

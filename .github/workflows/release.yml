@@ -50,6 +50,11 @@ jobs:
       - name: Check plugin syntax
         run: luac5.4 -p plugins/*/*.lua
 
+      - name: Simulate the slicer's plugin scan
+        env:
+          LUA: lua5.4
+        run: ./tools/check-plugins.sh
+
       - name: Build bundle archives
         run: |
           mkdir -p dist
@@ -95,8 +100,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > notes.md <<'NOTES'
-          Download the bundle below and install it in PrusaSlicer 3.0 — the archive is
-          already laid out the way the slicer expects, so no manual packaging is needed.
+          Download the bundle below and unpack it into your PrusaSlicer data directory,
+          under `lua/<bundle-id>/`, then restart the slicer.
+
+          Do not use the slicer's ZIP import: these archives are unsigned, and that path
+          requires both a signature and the author's public key already present on your
+          machine. Bundles loaded from the `lua` directory are not verified, so unpacking
+          works without either.
 
           Installation paths and troubleshooting are in
           [docs/installation.md](../blob/main/docs/installation.md).

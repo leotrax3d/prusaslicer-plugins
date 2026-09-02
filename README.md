@@ -27,7 +27,7 @@ Fills the gaps around the Flow Tower and Temperature Tower that ship with PrusaS
 A retraction tower was planned and deliberately dropped — retraction is a printer setting
 rather than an object-overridable print setting, so neither the modifier nor the G-code
 route measures anything meaningful. The reasoning is in
-[`docs/api-notes.md`](docs/api-notes.md#why-there-is-no-retraction-tower).
+[`DEVINFO.md`](DEVINFO.md#ideas-ruled-out-and-why).
 
 ## Installation
 
@@ -45,12 +45,12 @@ Until it ships, manual installation is the only route.
 | Document | Contents |
 | --- | --- |
 | [`docs/installation.md`](docs/installation.md) | Per-platform install paths, updating, uninstalling |
-| [`docs/api-notes.md`](docs/api-notes.md) | Reconstructed API reference and unresolved questions |
+| [`DEVINFO.md`](DEVINFO.md) | Reconstructed API reference, hard-won findings, and unresolved questions |
 | [`docs/roadmap.md`](docs/roadmap.md) | Planned phases and what is currently blocked |
 
 ## The plugin API in brief
 
-The full reference with signatures is in [`docs/api-notes.md`](docs/api-notes.md).
+The full reference with signatures is in [`DEVINFO.md`](DEVINFO.md).
 
 A plugin is a Lua file exposing a global `info` table and a global `execute(opts)`
 function. PrusaSlicer scans its `lua` directory at startup, builds menu entries from each
@@ -142,7 +142,7 @@ in the slicer.
 Because of that, geometry assumptions that could not be settled from the source are
 isolated in one place: `labels.lua` holds all text-engraving placement, so if the rotation
 or emboss semantics turn out differently, a single file needs correcting rather than every
-plugin. The open questions are tracked in [`docs/api-notes.md`](docs/api-notes.md).
+plugin. The open questions are tracked in [`DEVINFO.md`](DEVINFO.md#unverified-assumptions).
 
 ## Contributing
 

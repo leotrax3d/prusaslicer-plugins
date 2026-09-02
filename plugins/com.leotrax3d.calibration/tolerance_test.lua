@@ -7,8 +7,6 @@
 --
 -- Pure geometry: no G-code tricks and no setting changes mid-print.
 
-local labels = require('labels')
-
 info = {
     id = "tolerance_test",
     type = "project.plugin",
@@ -28,7 +26,13 @@ local MARGIN = 4.0      -- material margin around the holes [mm]
 local LABEL_ROW = 6.0   -- depth of the label strip in front of the holes [mm]
 local PIN_GAP = 10.0    -- gap between the test pin and the plate [mm]
 
+-- Modules are required inside execute() rather than at file level: the scan that
+-- collects `info` runs each file in a bare Lua engine that has neither `api` nor
+-- the custom `require`, so a top-level require aborts the file and the plugin
+-- never appears in the menu. Prusa's own flow_tower.lua does the same.
 function execute(opts)
+    local labels = require('labels')
+
     local steps = math.max(2, opts.steps)
     local pin_d = opts.pin_diameter
     local thickness = opts.thickness
