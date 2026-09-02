@@ -1,79 +1,68 @@
-# prusaslicer-plugins (unofficial)
+# prusaslicer-plugins
+
+[![Latest release](https://img.shields.io/github/v/release/leotrax3d/prusaslicer-plugins?label=release)](https://github.com/leotrax3d/prusaslicer-plugins/releases/latest)
+[![Release workflow](https://img.shields.io/github/actions/workflow/status/leotrax3d/prusaslicer-plugins/release.yml?label=build)](https://github.com/leotrax3d/prusaslicer-plugins/actions/workflows/release.yml)
+[![PrusaSlicer 3.0.0-alpha11](https://img.shields.io/badge/PrusaSlicer-3.0.0--alpha11-orange)](https://github.com/prusa3d/PrusaSlicer/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 An unofficial collection of Lua plugins for
 [PrusaSlicer 3.0](https://github.com/prusa3d/PrusaSlicer) and the plugin system it
 introduced.
 
-## Status
-
-PrusaSlicer 3.0 is in early alpha and Prusa has marked the Lua API as experimental, with
-breaking changes expected. Everything here targets `3.0.0-alpha11`.
-
-The bundle has been confirmed to load and run in 3.0.0-alpha11 on Windows. The geometry
-each plugin produces has had only light use so far — see
-[Testing](#testing) and the open assumptions in
-[`DEVINFO.md`](DEVINFO.md#unverified-assumptions).
+PrusaSlicer ships a Flow Tower and a Temperature Tower. These fill in the calibration
+prints it does not.
 
 ## Plugins
 
-### `com.leotrax3d.calibration` — Calibration Extras
+Each page covers what the plugin builds, every parameter, how to read the printed result,
+and which slicer settings it changes.
 
-Fills the gaps around the Flow Tower and Temperature Tower that ship with PrusaSlicer.
-
-| Plugin | Menu | Purpose |
+| Plugin | Purpose | Menu |
 | --- | --- | --- |
-| Fan Tower | Calibration/Fan Tower | Steps part cooling per height band via `M106`. A thin pillar beside the tower forces a travel move every layer, so it barely cools between passes and reveals insufficient cooling first. |
-| Speed Tower | Calibration/Speed Tower | Steps print speed per height band using modifier volumes. |
-| Tolerance Test | Calibration/Tolerance Test | A plate of holes with increasing clearance plus a matching test pin, to find the fit allowance your printer and filament actually need. |
+| **[Fan Tower](docs/plugins/fan-tower.md)** | Steps part cooling per height band. A slender pillar beside the tower forces a travel move every layer, so it barely cools between passes and shows insufficient cooling first. | Calibration → Fan Tower |
+| **[Speed Tower](docs/plugins/speed-tower.md)** | Steps print speed per height band using modifier volumes, with the slicer's own slowdown and volumetric limits disabled so the bands print at the speeds they claim. | Calibration → Speed Tower |
+| **[Tolerance Test](docs/plugins/tolerance-test.md)** | A plate of holes with increasing clearance plus a matching test pin, to find the fit allowance your printer and filament actually need. | Calibration → Tolerance Test |
 
-A retraction tower was planned and deliberately dropped — retraction is a printer setting
-rather than an object-overridable print setting, so neither the modifier nor the G-code
-route measures anything meaningful. The reasoning is in
-[`DEVINFO.md`](DEVINFO.md#ideas-ruled-out-and-why).
+All three live in the bundle `com.leotrax3d.calibration`. They change print or filament
+settings in the project they create and do not restore them, so run them in a throwaway
+project.
 
 ## Installation
 
-Download a bundle ZIP from the
+Download the bundle from the
 [latest release](https://github.com/leotrax3d/prusaslicer-plugins/releases/latest) and
-install it in PrusaSlicer, or copy a bundle from `plugins/` into the slicer's `lua`
-directory and restart. Full per-platform paths and troubleshooting are in
-[`docs/installation.md`](docs/installation.md).
+unpack it into your PrusaSlicer data directory under `lua/com.leotrax3d.calibration/`,
+then restart the slicer.
 
-Prusa is building a plugin marketplace with one-click installs and signature checking.
-Until it ships, manual installation is the only route.
+Do not use the slicer's ZIP import — the archives are unsigned, and that path additionally
+requires the author's public key on your machine. Unpacking has no such requirement.
+[`docs/installation.md`](docs/installation.md) has the per-platform paths, the data
+directory naming that catches people out, and troubleshooting.
+
+## Status
+
+Confirmed working in PrusaSlicer 3.0.0-alpha11 on Windows: the plugins load, the dialogs
+generate, and the objects and engraved labels come out as intended.
+
+The API is experimental and Prusa expects breaking changes, so treat compatibility with
+any given alpha as unproven until tested. Open questions are tracked in
+[`DEVINFO.md`](DEVINFO.md#unverified-assumptions).
 
 ## Documentation
 
 | Document | Contents |
 | --- | --- |
-| [`docs/installation.md`](docs/installation.md) | Per-platform install paths, updating, uninstalling |
-| [`DEVINFO.md`](DEVINFO.md) | Reconstructed API reference, hard-won findings, and unresolved questions |
-| [`docs/roadmap.md`](docs/roadmap.md) | Planned phases and what is currently blocked |
+| [`docs/plugins/`](docs/plugins/README.md) | Per-plugin reference |
+| [`docs/installation.md`](docs/installation.md) | Install paths, updating, troubleshooting |
+| [`DEVINFO.md`](DEVINFO.md) | How the plugin system works: API reference, findings, and what it cannot do |
+| [`docs/roadmap.md`](docs/roadmap.md) | Planned work and what is currently blocked |
 
-## The plugin API in brief
-
-The full reference with signatures is in [`DEVINFO.md`](DEVINFO.md).
+## Writing your own
 
 A plugin is a Lua file exposing a global `info` table and a global `execute(opts)`
-function. PrusaSlicer scans its `lua` directory at startup, builds menu entries from each
-plugin's `menu` field, generates a parameter dialog from `info.params`, and calls
-`execute` with the values the user entered.
-
-**Available:** eleven procedural mesh primitives (`make_cube`, `make_cylinder`,
-`make_torus`, `make_snap`, and more), plus `load_stl`, `emboss_svg` and `emboss_text`;
-negative and modifier volumes, along with support blockers and enforcers; per-object and
-per-volume setting overrides; read and write access to print, printer and material
-presets; and custom G-code injected at a given Z height.
-
-**Not available:** G-code post-processing, network access, filesystem access outside the
-plugin's own directory, persistence across restarts, event hooks (a plugin runs only when
-its menu entry is clicked), custom 3D viewport gizmos, and any dialog control beyond the
-four parameter types `string`, `float`, `int` and `bool`.
-
-These limits are what shape the [roadmap](docs/roadmap.md) — most notably they are why a
-filament database is not currently buildable.
-
-### Minimal plugin
+function. PrusaSlicer scans its `lua` directory at startup, builds menu entries from
+`info.menu`, generates a dialog from `info.params`, and calls `execute` with the values
+entered.
 
 ```lua
 info = {
@@ -98,78 +87,70 @@ function execute(opts)
 end
 ```
 
-## Repository layout
+Available: eleven procedural mesh primitives plus STL, SVG and text embossing; negative and
+modifier volumes; support blockers and enforcers; per-object and per-volume setting
+overrides; read and write access to print, printer and material presets; and custom G-code
+injected at a given Z height.
 
-```
-plugins/<bundle-id>/   plugin bundle: manifest.json plus Lua scripts
-docs/                  installation, API notes, roadmap
-```
+Not available: G-code post-processing, network access, filesystem access outside the
+plugin's own directory, persistence across restarts, event hooks, viewport gizmos, and any
+dialog control beyond the four parameter types `string`, `float`, `int` and `bool`.
 
-Bundles use reverse-DNS identifiers. A bundle groups related plugins under one
-`manifest.json`; each `.lua` file in it that defines `info` becomes its own menu entry.
-Files that return a module instead — `labels.lua`, for example — are shared helpers loaded
-with `require('labels')`.
+[`DEVINFO.md`](DEVINFO.md) has the full reference with signatures, the traps that cost this
+project time, and the ideas that turned out to be impossible.
 
-## Development
-
-Scaffold a new bundle with the slicer's built-in wizard:
+Scaffold a bundle with the slicer's own wizard:
 
 ```bash
 <installation_path>/PrusaSlicer plugin init com.example.my-plugin
 ```
 
-Bundles are distributed as ZIP archives signed with an RSA key pair:
+## Repository layout
 
-```bash
-# once, to create a key pair
-<installation_path>/PrusaSlicer plugin keygen -P author.private.pem -p author.public.pem
-
-# for each release
-<installation_path>/PrusaSlicer plugin sign -P author.private.pem com.example.my-plugin
+```
+plugins/<bundle-id>/   plugin bundle: manifest.json plus Lua scripts
+docs/plugins/          per-plugin reference
+docs/                  installation and roadmap
+tools/                 checks
+DEVINFO.md             how the plugin system works
 ```
 
-Private keys must never be committed to this repository.
+A bundle groups related plugins under one `manifest.json`. Each `.lua` file that defines
+`info` becomes a menu entry; files returning a module instead are shared helpers loaded
+with `require('name')` — **inside `execute()`**, never at file level, for reasons
+[`DEVINFO.md`](DEVINFO.md#the-two-lua-environments--verified-and-the-subtlest-trap-here)
+explains.
 
-### Testing
+## Testing
 
 ```bash
-luac -p plugins/*/*.lua
+luac -p plugins/*/*.lua      # syntax
+./tools/check-plugins.sh     # simulates the slicer's plugin scan
 ```
 
-Syntax checking is the only automated verification available. The slicer's Lua environment
-— `api`, `VolumeType`, the preset system — does not exist outside PrusaSlicer, so there is
-no way to unit-test plugin behaviour on its own. Every plugin has to be exercised by hand
-in the slicer.
+Both run in CI before a release is published, along with a check that each built archive is
+flat and carries a root `manifest.json`.
 
-Because of that, geometry assumptions that could not be settled from the source are
-isolated in one place: `labels.lua` holds all text-engraving placement, so if the rotation
-or emboss semantics turn out differently, a single file needs correcting rather than every
-plugin. The open questions are tracked in [`DEVINFO.md`](DEVINFO.md#unverified-assumptions).
+There is no way to unit-test plugin behaviour: `api`, `VolumeType` and the preset system
+exist only inside PrusaSlicer. Everything beyond loading has to be exercised by hand.
 
 ## Contributing
 
-Issues and pull requests are welcome. Since the API is still moving, always state which
-alpha version you tested against, and note whether a change is verified in the slicer or
-inferred from the source.
+Issues and pull requests welcome. Since the API is still moving, always state which alpha
+version you tested against, and whether a change is verified in the slicer or inferred from
+the source.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
 
-The plugins are original work written against PrusaSlicer's public Lua API. They contain
-no PrusaSlicer source code, so the slicer's AGPL licensing does not extend to them.
+The plugins are original work written against PrusaSlicer's public Lua API. They contain no
+PrusaSlicer source code, so the slicer's AGPL licensing does not extend to them.
 
 ## Trademarks
 
-"Prusa", "PrusaSlicer" and "Original Prusa" are trademarks of Prusa Research s.r.o. This
-is an independent, unofficial project. It is not affiliated with, endorsed by, or
-supported by Prusa Research, and the name is used only to identify the software these
-plugins are written for. For support with PrusaSlicer itself, contact Prusa Research; for
-problems with these plugins, open an issue here.
-
-## References
-
-- [`doc/Plugin_API.md`](https://github.com/prusa3d/PrusaSlicer/blob/version_3.0.0-alpha11/doc/Plugin_API.md) — official plugin documentation
-- [`ProjectApi.cpp`](https://github.com/prusa3d/PrusaSlicer/blob/version_3.0.0-alpha11/src/slic3r-shared/src/Slic3r/App/Lua/ProjectApi.cpp) — the API registration, annotated; the most complete reference available
-- [PrusaSlicer 3.0.0-alpha11 release notes](https://github.com/prusa3d/PrusaSlicer/releases/tag/version_3.0.0-alpha11)
-- [Plugin API reference](https://prusa.io/ps-plugins/)
+"Prusa", "PrusaSlicer" and "Original Prusa" are trademarks of Prusa Research s.r.o. This is
+an independent, unofficial project. It is not affiliated with, endorsed by, or supported by
+Prusa Research, and the name is used only to identify the software these plugins are
+written for. For support with PrusaSlicer itself, contact Prusa Research; for problems with
+these plugins, open an issue here.

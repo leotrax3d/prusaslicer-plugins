@@ -56,11 +56,20 @@ function execute(opts)
         local clearance = opts.min_clearance + clearance_span * (i - 1) / (steps - 1)
         local hole_cx = pitch * (i - 0.5)
 
-        -- Overhang both ends slightly so the cut passes cleanly through.
+        -- Position from the mesh's own bounds rather than assuming where
+        -- make_cylinder puts its origin: this centres the hole correctly
+        -- whether the primitive is centred in XY or anchored at a corner.
+        -- Overhangs both ends slightly so the cut passes cleanly through.
+        local hole = api.make_cylinder((pin_d + clearance) * 0.5, thickness + 2)
+        local hb = hole:bounds()
         table.insert(other_volumes, {
-            mesh = api.make_cylinder((pin_d + clearance) * 0.5, thickness + 2),
+            mesh = hole,
             type = VolumeType.Negative,
-            translate = { x = hole_cx, y = hole_cy, z = -1 }
+            translate = {
+                x = hole_cx - (hb.min_x + hb.max_x) * 0.5,
+                y = hole_cy - (hb.min_y + hb.max_y) * 0.5,
+                z = -1 - hb.min_z
+            }
         })
 
         if opts.enable_labels then
@@ -83,9 +92,17 @@ function execute(opts)
     }
 
     -- The test pin as its own object, so it prints loose beside the plate.
+    -- Same bounds-based placement, and sat on the bed rather than at whatever
+    -- Z the primitive happens to start from.
+    local pin = api.make_cylinder(pin_d * 0.5, thickness * 2)
+    local pb = pin:bounds()
     api.project:add_object {
-        mesh = api.make_cylinder(pin_d * 0.5, thickness * 2),
-        translate = { x = plate_w * 0.5, y = -(plate_d * 0.5 + PIN_GAP) },
+        mesh = pin,
+        translate = {
+            x = plate_w * 0.5 - (pb.min_x + pb.max_x) * 0.5,
+            y = plate_d + PIN_GAP - pb.min_y,
+            z = -pb.min_z
+        },
         object_params = {
             fill_density = "100%"
         }

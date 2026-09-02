@@ -20,7 +20,7 @@ info = {
     }
 }
 
-local PILLAR_SIZE = 4.0  -- edge length of the cooling test pillar [mm]
+local PILLAR_SIZE = 6.0  -- edge length of the cooling test pillar [mm]
 local PILLAR_GAP  = 15.0 -- gap between tower and pillar [mm]
 
 --- Translates a fan percentage into a G-code command.
@@ -58,6 +58,26 @@ function execute(opts)
     bed:print_presets():set("perimeters", 2)
     bed:print_presets():set("top_solid_layers", 3)
     bed:print_presets():set("bottom_solid_layers", 3)
+
+    -- The pillar is deliberately slender and the tower is tall, which the
+    -- slicer flags as a bed adhesion risk. A brim is not optional here.
+    bed:print_presets():set("brim_type", "outer_only")
+    bed:print_presets():set("brim_width", 5)
+
+    -- Hand the fan over to this plugin.
+    --
+    -- CoolingBuffer::change_extruder_set_fan() recomputes a fan speed for every
+    -- layer and emits M106 whenever its own value changes -- which would
+    -- silently overwrite the steps below. Short layers in particular trigger
+    -- "layer time below slowdown_below_layer_time -> full throttle".
+    --
+    -- With auto cooling off and fan_always_on off, its computed speed stays 0
+    -- for every layer, so after the initial M107 it never emits again and the
+    -- custom G-code is authoritative.
+    bed:material_presets(0):set("cooling", 0)
+    bed:material_presets(0):set("fan_always_on", 0)
+    bed:material_presets(0):set("full_fan_speed_layer", 0)
+    bed:material_presets(0):set("disable_fan_first_layers", 1)
 
     local other_volumes = {}
 
