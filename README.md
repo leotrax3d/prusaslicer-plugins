@@ -31,8 +31,10 @@ route measures anything meaningful. The reasoning is in
 
 ## Installation
 
-Copy a bundle from `plugins/` into the slicer's `lua` directory and restart. Full
-per-platform paths and troubleshooting are in
+Download a bundle ZIP from the
+[latest release](https://github.com/leotrax3d/prusaslicer-plugins/releases/latest) and
+install it in PrusaSlicer, or copy a bundle from `plugins/` into the slicer's `lua`
+directory and restart. Full per-platform paths and troubleshooting are in
 [`docs/installation.md`](docs/installation.md).
 
 Prusa is building a plugin marketplace with one-click installs and signature checking.
