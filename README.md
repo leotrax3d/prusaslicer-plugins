@@ -1,4 +1,4 @@
-# prusaslicer-plugins
+# prusaslicer-plugins (unofficial)
 
 Lua plugins for [PrusaSlicer 3.0](https://github.com/prusa3d/PrusaSlicer), which introduced
 the slicer's first official plugin system.
