@@ -7,7 +7,7 @@
 	"min_slicer_version": "3.0.0",
 	"version": "0.2.0",
 	"author": "leotrax3d",
-	"repo": "https://github.com/leotrax3d/prusaslicer-plugins",
+	"repo": "https://github.com/leotrax3d/prusaslicer-plugins-unofficial",
 	"required_apis": {
 		"project.plugin": "1.0.0"
 	}

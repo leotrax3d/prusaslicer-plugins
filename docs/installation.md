@@ -35,7 +35,7 @@ that directory and the one above are scanned at startup.
 
 ## Installing from a release
 
-The simplest route. Each [release](https://github.com/leotrax3d/prusaslicer-plugins/releases)
+The simplest route. Each [release](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/releases)
 carries a ready-made ZIP per bundle, built and layout-checked by CI, so there is nothing to
 package yourself.
 
@@ -81,8 +81,8 @@ a generated parameter dialog; confirming it builds the objects in the current pr
 ## Installing straight from a clone
 
 ```bash
-git clone https://github.com/leotrax3d/prusaslicer-plugins.git
-cd prusaslicer-plugins
+git clone https://github.com/leotrax3d/prusaslicer-plugins-unofficial.git
+cd prusaslicer-plugins-unofficial
 cp -r plugins/com.leotrax3d.calibration "<data directory>/lua/"
 ```
 
