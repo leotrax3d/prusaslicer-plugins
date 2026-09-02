@@ -13,7 +13,7 @@ slicer**. Treat them as drafts, and see [Testing](#testing) for what that means 
 
 ## Plugins
 
-### `com.prsslcr.calibration` — Calibration Extras
+### `com.leotrax3d.calibration` — Calibration Extras
 
 Fills the gaps around the Flow Tower and Temperature Tower that ship with PrusaSlicer.
 
@@ -149,7 +149,18 @@ inferred from the source.
 
 ## License
 
-AGPL-3.0-only, matching PrusaSlicer. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
+
+The plugins are original work written against PrusaSlicer's public Lua API. They contain
+no PrusaSlicer source code, so the slicer's AGPL licensing does not extend to them.
+
+## Trademarks
+
+"Prusa", "PrusaSlicer" and "Original Prusa" are trademarks of Prusa Research s.r.o. This
+is an independent, unofficial project. It is not affiliated with, endorsed by, or
+supported by Prusa Research, and the name is used only to identify the software these
+plugins are written for. For support with PrusaSlicer itself, contact Prusa Research; for
+problems with these plugins, open an issue here.
 
 ## References
 

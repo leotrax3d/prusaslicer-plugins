@@ -1,9 +1,9 @@
 {
-	"id": "com.prsslcr.calibration",
+	"id": "com.leotrax3d.calibration",
 	"name": "Calibration Extras",
 	"description": "Additional calibration prints: Fan Tower, Speed Tower, Tolerance Test",
 	"category": "Calibration",
-	"license": "AGPL-3.0-only",
+	"license": "MIT",
 	"min_slicer_version": "3.0.0",
 	"version": "0.1.0",
 	"author": "leotrax3d",
