@@ -34,7 +34,7 @@ exist.
 ## Installing a bundle
 
 1. Close PrusaSlicer. Plugins are discovered once at startup.
-2. Copy the whole bundle directory — for example `plugins/com.prsslcr.calibration` — into
+2. Copy the whole bundle directory — for example `plugins/com.leotrax3d.calibration` — into
    the `lua` directory. Keep the directory name; it must match the `id` in
    `manifest.json`.
 3. Start PrusaSlicer.
@@ -44,7 +44,7 @@ The result should look like this:
 ```
 <data directory>/
 └── lua/
-    └── com.prsslcr.calibration/
+    └── com.leotrax3d.calibration/
         ├── manifest.json
         ├── fan_tower.lua
         ├── labels.lua
@@ -61,7 +61,7 @@ a generated parameter dialog; confirming it builds the objects in the current pr
 ```bash
 git clone https://github.com/leotrax3d/PrsslcrPlugins.git
 cd PrsslcrPlugins
-cp -r plugins/com.prsslcr.calibration "<data directory>/lua/"
+cp -r plugins/com.leotrax3d.calibration "<data directory>/lua/"
 ```
 
 Copy rather than symlink. Plugin file access is confined to the bundle's own directory,

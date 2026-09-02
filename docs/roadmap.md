@@ -29,7 +29,7 @@ origins, which setting keys are valid per volume). Those need a running slicer.
 
 ## Phase 1 — Complete the calibration set — in progress
 
-PrusaSlicer ships a Flow Tower and a Temperature Tower. The `com.prsslcr.calibration`
+PrusaSlicer ships a Flow Tower and a Temperature Tower. The `com.leotrax3d.calibration`
 bundle adds:
 
 | Plugin | Mechanism | Status |
