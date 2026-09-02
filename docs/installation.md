@@ -17,20 +17,21 @@ Bundles go into a `lua` subdirectory of the PrusaSlicer data directory:
 
 | Platform | Path |
 | --- | --- |
-| Windows | `%APPDATA%\PrusaSlicer-alpha\lua` |
-| macOS | `~/Library/Application Support/PrusaSlicer-alpha/lua` |
-| Linux | `~/.config/PrusaSlicer-alpha/lua` |
-| Linux (Flatpak) | `~/.var/app/com.prusa3d.PrusaSlicer/config/PrusaSlicer-alpha/lua` |
+| Windows | `%APPDATA%\<app dir>\lua` |
+| macOS | `~/Library/Application Support/<app dir>/lua` |
+| Linux | `~/.config/<app dir>/lua` |
 
-**On the directory name.** It follows the application key of the build you are running.
-Prusa's official alpha builds use `PrusaSlicer-alpha`; beta builds use `PrusaSlicer-beta`,
-and stable releases plain `PrusaSlicer`. A copy built from source uses `PrusaSlicer`
-unless the build script overrides it. If you launch the slicer with `--datadir`, that path
-replaces the table above.
+**`<app dir>` depends on your build.** It follows the application key the build was
+compiled with, and the 3.0 alphas do not use the plain name. A 3.0.0-alpha11 Windows
+install has been observed using `PrusaSlicer3-dev`, giving
+`%APPDATA%\PrusaSlicer3-dev\lua`. Stable releases use `PrusaSlicer`. Launching with
+`--datadir` overrides all of this.
 
-If you are unsure which directory is live, open the folder containing `PrusaSlicer.ini`
-and your saved presets — that is the data directory. Create `lua` yourself if it does not
-exist.
+Rather than guessing, find the folder containing `PrusaSlicer.ini` and your saved presets
+— that is the data directory. Create `lua` inside it if it does not exist.
+
+Bundles shipped with the slicer live in `resources/lua` alongside the application; both
+that directory and the one above are scanned at startup.
 
 ## Installing from a release
 
@@ -169,7 +170,7 @@ directory. Compress the files inside the bundle, not the bundle folder — see
 
 **A plugin errors when run.** The plugins in this repository have not been verified
 against a live slicer. Please open an issue with the error text and your alpha version;
-see [`api-notes.md`](api-notes.md) for the assumptions most likely to be wrong.
+see [`DEVINFO.md`](../DEVINFO.md#unverified-assumptions) for the assumptions most likely to be wrong.
 
 ## A note on trust
 

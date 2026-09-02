@@ -2,7 +2,7 @@
 --
 -- Labels are placed as VolumeType.Negative, so they are engraved into the
 -- surface. Two assumptions are baked in here that have not been verified
--- against a running slicer (see docs/api-notes.md):
+-- against a running slicer (see DEVINFO.md, "Unverified assumptions"):
 --
 --   1. api.emboss_text places glyphs in the XY plane, extruded along +Z.
 --   2. `rotate` is applied about the volume's local origin, before `translate`.

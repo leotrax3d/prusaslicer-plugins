@@ -5,8 +5,6 @@
 -- between the two every layer, leaving the pillar almost no time to cool. That is
 -- where insufficient cooling shows up first.
 
-local labels = require('labels')
-
 info = {
     id = "fan_tower",
     type = "project.plugin",
@@ -37,7 +35,13 @@ local function fan_gcode(percent)
     return "M106 S" .. pwm
 end
 
+-- Modules are required inside execute() rather than at file level: the scan that
+-- collects `info` runs each file in a bare Lua engine that has neither `api` nor
+-- the custom `require`, so a top-level require aborts the file and the plugin
+-- never appears in the menu. Prusa's own flow_tower.lua does the same.
 function execute(opts)
+    local labels = require('labels')
+
     local steps = math.max(2, opts.steps)
     local step_height = opts.step_height
     local size = opts.size

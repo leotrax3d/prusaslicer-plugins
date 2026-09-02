@@ -50,6 +50,11 @@ jobs:
       - name: Check plugin syntax
         run: luac5.4 -p plugins/*/*.lua
 
+      - name: Simulate the slicer's plugin scan
+        env:
+          LUA: lua5.4
+        run: ./tools/check-plugins.sh
+
       - name: Build bundle archives
         run: |
           mkdir -p dist
