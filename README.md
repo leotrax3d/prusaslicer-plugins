@@ -9,8 +9,9 @@ An unofficial collection of Lua plugins for
 [PrusaSlicer 3.0](https://github.com/prusa3d/PrusaSlicer) and the plugin system it
 introduced.
 
-PrusaSlicer ships a Flow Tower and a Temperature Tower. These fill in the calibration
-prints it does not.
+PrusaSlicer ships a Flow Tower and a Temperature Tower. This repository fills in the
+calibration prints it does not, and adds parametric generators for parts you would otherwise
+open CAD for.
 
 ## Plugins
 
@@ -22,17 +23,21 @@ and which slicer settings it changes.
 | **[Fan Tower](docs/plugins/fan-tower.md)** | Steps part cooling per height band. A slender pillar beside the tower forces a travel move every layer, so it barely cools between passes and shows insufficient cooling first. | Calibration → Fan Tower |
 | **[Speed Tower](docs/plugins/speed-tower.md)** | Steps print speed per height band using modifier volumes, with the slicer's own slowdown and volumetric limits disabled so the bands print at the speeds they claim. | Calibration → Speed Tower |
 | **[Tolerance Test](docs/plugins/tolerance-test.md)** | A plate of holes with increasing clearance plus a matching test pin, to find the fit allowance your printer and filament actually need. | Calibration → Tolerance Test |
+| **[Box Generator](docs/plugins/box-generator.md)** | Storage boxes, drawer inserts and organiser trays, specified by the space you need *inside* them. Lid, compartment dividers, stacking groove, finger notch and engraved label. | Generators → Parametric Box |
+| **[Ambigram](docs/plugins/ambigram.md)** | A word overlaid with its own 180° rotation, or with a second word, so the plate reads both ways round. | Generators → Ambigram |
 
-All three live in the bundle `com.leotrax3d.calibration`. They change print or filament
-settings in the project they create and do not restore them, so run them in a throwaway
-project.
+Two bundles. The three calibration plugins in `com.leotrax3d.calibration` change print or
+filament settings in the project they create and do not restore them, so run those in a
+throwaway project. The generators in `com.leotrax3d.utilities` are pure geometry and change
+nothing.
 
 ## Installation
 
-Download the bundle from the
-[latest release](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/releases/latest) and
-unpack it into your PrusaSlicer data directory under `lua/com.leotrax3d.calibration/`,
-then restart the slicer.
+Download the bundles from the
+[latest release](https://github.com/leotrax3d/prusaslicer-plugins-unofficial/releases/latest)
+and unpack each into your PrusaSlicer data directory under `lua/<bundle-id>/` — so
+`lua/com.leotrax3d.calibration/` and `lua/com.leotrax3d.utilities/` — then restart the
+slicer. Install only the bundles you want; they are independent.
 
 Do not use the slicer's ZIP import — the archives are unsigned, and that path additionally
 requires the author's public key on your machine. Unpacking has no such requirement.
@@ -111,7 +116,7 @@ Scaffold a bundle with the slicer's own wizard:
 plugins/<bundle-id>/   plugin bundle: manifest.json plus Lua scripts
 docs/plugins/          per-plugin reference
 docs/                  installation and roadmap
-tools/                 checks
+tools/                 checks and geometry tests
 DEVINFO.md             how the plugin system works
 ```
 
@@ -126,13 +131,16 @@ explains.
 ```bash
 luac -p plugins/*/*.lua      # syntax
 ./tools/check-plugins.sh     # simulates the slicer's plugin scan
+./tools/run-tests.sh         # geometry arithmetic against a mock API
 ```
 
-Both run in CI before a release is published, along with a check that each built archive is
-flat and carries a root `manifest.json`.
+All three run in CI before a release is published, along with a check that each built
+archive is flat and carries a root `manifest.json`.
 
-There is no way to unit-test plugin behaviour: `api`, `VolumeType` and the preset system
-exist only inside PrusaSlicer. Everything beyond loading has to be exercised by hand.
+The tests go only as far as arithmetic. `api`, `VolumeType` and the preset system exist
+only inside PrusaSlicer, so the mock can confirm that a lid clears the box it was generated
+for, but not that either comes out of the printer right. Everything beyond that is
+exercised by hand.
 
 ## Contributing
 

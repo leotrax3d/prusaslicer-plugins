@@ -55,6 +55,11 @@ jobs:
           LUA: lua5.4
         run: ./tools/check-plugins.sh
 
+      - name: Run geometry tests
+        env:
+          LUA: lua5.4
+        run: ./tools/run-tests.sh
+
       - name: Build bundle archives
         run: |
           mkdir -p dist

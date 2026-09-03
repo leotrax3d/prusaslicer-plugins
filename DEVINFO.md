@@ -138,6 +138,23 @@ A `VolumeDefinition` has `mesh` plus optional `translate`, `rotate`, `type`, `pa
 Negative volumes give boolean subtraction; modifier volumes give position-dependent
 settings. `add_object` may be called more than once to place separate objects.
 
+**Volumes are applied in list order**, and that ordering is the only boolean control there
+is. A Negative subtracts from everything before it; a Solid added afterwards is put back.
+So a ring, or a groove around a base, is built as "cut the whole pocket, then restore the
+island in the middle" — there is no ring primitive and no other way to express it.
+
+**There is no intersection.** Union (Solid) and difference (Negative) are the whole set,
+and a mesh's geometry cannot be read back — `Mesh` exposes `bounds()` and `translate()`,
+not triangles. Anything needing A ∩ B is therefore out, including the dual-view ambigram
+sculpture where two words extruded along perpendicular axes each show from one direction.
+
+**The main mesh has no translate of its own** — only the object does. When a shape is
+assembled from several pieces, it is easier to build everything in one flat object space
+and then shift the object so its first volume lands correctly, expressing every other
+translate relative to that first piece. `shapes.lua` in `com.leotrax3d.utilities` does
+exactly this, and it avoids depending on `Mesh:translate`, whose semantics (mutate or
+return?) this project has not verified.
+
 ### Settings
 
 ```lua
@@ -263,6 +280,12 @@ the G-code route measures nothing. A variant enabling `use_firmware_retraction` 
 measure something that does not transfer to normal settings — misleading, so deliberately
 not built.
 
+**Dual-view ambigram sculptures** — the kind where one word reads from the front and a
+different one from the side. Needs boolean intersection of two extrusions. The API has only
+union and difference, and no mesh geometry access to build the intersection by hand, so it
+cannot be approximated either. The overlay ambigram in `com.leotrax3d.utilities` is the
+union-only alternative and is a different effect, not a substitute.
+
 Post-processing scripts remain the escape hatch for all of the above: any language, full
 system rights, no sandbox, configured under Print Settings → Post-processing scripts.
 
@@ -326,13 +349,23 @@ Confirmed on 3.0.0-alpha11, Windows, Prusa MINI 0.4:
 ```bash
 luac -p plugins/*/*.lua      # syntax
 ./tools/check-plugins.sh     # simulates the slicer's scan pass
+./tools/run-tests.sh         # geometry arithmetic against a mock API
 ```
 
-Both run in CI before a release is published, along with a check that each built archive
-is flat and carries a root `manifest.json`.
+All three run in CI before a release is published, along with a check that each built
+archive is flat and carries a root `manifest.json`.
 
-There is no way to unit-test plugin behaviour: `api`, `VolumeType` and the preset system
-exist only inside PrusaSlicer. Everything beyond loading has to be exercised by hand.
+Plugin *behaviour* cannot be unit-tested: `api`, `VolumeType` and the preset system exist
+only inside PrusaSlicer. What can be tested is the arithmetic, and `tools/tests/mock.lua`
+does that — it stands in for the API with primitives that report bounding boxes, and
+replays the volume list the way the slicer would (rotate about the local origin, then
+translate, then the object's translate). Its primitives deliberately have awkward origins,
+so any code that assumes where `make_cylinder` or `emboss_text` starts fails there rather
+than silently misplacing geometry in the slicer.
+
+The mock confirms intent, not correctness: it will tell you a lid clears the box it was
+generated for, never that either prints. Verify a new generator once by hand before
+trusting it.
 
 Releases are cut by the `Release` workflow, on a `v*` tag or via `workflow_dispatch` with
 a version input. Note that tag pushes fail from the Claude Code remote environment (the

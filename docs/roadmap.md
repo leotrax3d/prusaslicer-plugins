@@ -34,9 +34,9 @@ bundle adds:
 
 | Plugin | Mechanism | Status |
 | --- | --- | --- |
-| Fan Tower | `M106` per height band via custom G-code | built, untested |
-| Speed Tower | modifier volumes with speed overrides | built, untested |
-| Tolerance Test | pure geometry, negative cylinders | built, untested |
+| Fan Tower | `M106` per height band via custom G-code | built, tested |
+| Speed Tower | modifier volumes with speed overrides | built, tested |
+| Tolerance Test | pure geometry, negative cylinders | built, tested |
 | Retraction Tower | — | dropped, see [`DEVINFO.md`](../DEVINFO.md#ideas-ruled-out-and-why) |
 
 Next: verify the three against a running slicer and close out the open geometry questions,
@@ -47,10 +47,20 @@ then add bridging and overhang tests.
 Building on the Tolerance Test: thread gauges, print-in-place hinge tests, press-fit
 samples. Depends on the geometry semantics that Phase 1 testing will confirm.
 
-## Phase 3 — Parametric utility objects
+## Phase 3 — Parametric utility objects — started
 
-Boxes and inserts, cable clips, wall mounts, spool holders. Eleven primitives plus
-negative volumes make genuine parametric modelling viable.
+Eleven primitives plus negative volumes make genuine parametric modelling viable. The
+`com.leotrax3d.utilities` bundle is the start of it:
+
+| Plugin | Mechanism | Status |
+| --- | --- | --- |
+| Box Generator | rounded slabs, ordered Solid/Negative volumes | built, untested in the slicer |
+| Ambigram | overlaid text volumes, union only | built, untested in the slicer |
+
+Both have their placement arithmetic covered by `tools/run-tests.sh`, which is not the same
+as being verified in PrusaSlicer.
+
+Still to come: cable clips, wall mounts, spool holders, honeycomb and grid inserts.
 
 On Gridfinity specifically: the original is licensed CC BY-NC-SA. The non-commercial
 clause needs clarifying before investing effort there.
